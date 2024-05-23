@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Sans as Sans} from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster"
+import 'leaflet/dist/leaflet.css';
 
 const sans = Sans({ subsets: ["latin"] });
 
