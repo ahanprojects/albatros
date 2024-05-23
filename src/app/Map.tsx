@@ -13,7 +13,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
 import { Button } from "@/components/ui/button";
-import { LocateFixed, Minus, Plus } from "lucide-react";
+import { Layers2, LocateFixed, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { myLocationIcon } from "@/components/common/Pin";
@@ -33,7 +33,6 @@ export default function MapComponent() {
       className="w-full h-full"
       zoomControl={false}
       attributionControl={false}>
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
       <FloatingButtons />
       <UserMarker />
     </MapContainer>
@@ -49,8 +48,8 @@ function UserMarker() {
     },
   });
   useEffect(() => {
-    map.locate()
-  }, [])
+    map.locate();
+  }, []);
 
   return (
     position && (
@@ -61,7 +60,14 @@ function UserMarker() {
   );
 }
 
+const tileLayerUrls = [
+  "https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png",
+  "https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.png",
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+];
+
 function FloatingButtons() {
+  const [tileId, setTileId] = useState(0);
   const map = useMapEvents({
     locationfound: handleLocate,
   });
@@ -74,13 +80,25 @@ function FloatingButtons() {
   function zoomIn() {
     map.setZoom(map.getZoom() + 1);
   }
+
   function zoomOut() {
     map.setZoom(map.getZoom() - 1);
   }
 
+  function changeLayer() {
+    setTileId((v) => (v + 1) % tileLayerUrls.length);
+  }
+
   return (
     <>
-      <div className="absolute right-0 bottom-0 m-4 space-y-1 z-[999]">
+      <TileLayer url={tileLayerUrls[tileId]} />
+      <div className="absolute right-0 bottom-0 m-4 flex flex-col gap-2 z-[999]">
+        <Button
+          onClick={changeLayer}
+          size="icon"
+          className="rounded-full shadow-lg bg-white hover:bg-gray-200 w-14 h-14 p-3">
+          <Layers2 className="text-slate-800 h-14 w-14" />
+        </Button>
         <Button
           onClick={() => map.locate()}
           size="icon"
