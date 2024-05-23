@@ -8,35 +8,23 @@ import {
   useMapEvents,
   useMap,
 } from "react-leaflet";
-import { LatLngExpression } from "leaflet";
+import { Icon, LatLngExpression, LocationEvent } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
-import { useMemo } from "react";
-import Spinner from "@/components/common/Spinner";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { LocateFixed, Minus, Plus } from "lucide-react";
 import Image from "next/image";
-
-interface MapComponentProps {
-  posix?: LatLngExpression;
-  zoom?: number;
-}
+import { useEffect, useState } from "react";
+import { myLocationIcon } from "@/components/common/Pin";
 
 const defaults = {
   zoom: 15,
   posix: [-6.176254706719461, -688933.172713317] as LatLngExpression,
 };
 
-export default function MapComponent(props: MapComponentProps) {
-  const { zoom = defaults.zoom, posix = defaults.posix } = props;
-  function MapEvents() {
-    useMapEvents({
-      // click: (e) => console.log(e.latlng),
-    });
-    return null;
-  }
+export default function MapComponent() {
+  const { zoom, posix } = defaults;
 
   return (
     <MapContainer
@@ -46,20 +34,41 @@ export default function MapComponent(props: MapComponentProps) {
       zoomControl={false}
       attributionControl={false}>
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <MapEvents />
       <FloatingButtons />
-      <Marker position={posix}>
-        <Popup>Hey ! I study here</Popup>
-      </Marker>
+      <UserMarker />
     </MapContainer>
   );
 }
 
-function FloatingButtons() {
-  const map = useMap();
+function UserMarker() {
+  const [position, setPosition] = useState<LatLngExpression>();
+  const map = useMapEvents({
+    locationfound: (e) => {
+      const { lat, lng } = e.latlng;
+      setPosition([lat, lng]);
+    },
+  });
+  useEffect(() => {
+    map.locate()
+  }, [])
 
-  function myLocation() {
-    map.locate({setView: true, maxZoom: 24})
+  return (
+    position && (
+      <Marker icon={myLocationIcon} position={position}>
+        <Popup>You are here.</Popup>
+      </Marker>
+    )
+  );
+}
+
+function FloatingButtons() {
+  const map = useMapEvents({
+    locationfound: handleLocate,
+  });
+
+  function handleLocate(e: LocationEvent) {
+    const { lat, lng } = e.latlng;
+    map.setView([lat, lng], 16);
   }
 
   function zoomIn() {
@@ -73,7 +82,7 @@ function FloatingButtons() {
     <>
       <div className="absolute right-0 bottom-0 m-4 space-y-1 z-[999]">
         <Button
-          onClick={myLocation}
+          onClick={() => map.locate()}
           size="icon"
           className="rounded-full shadow-lg bg-white hover:bg-gray-200 w-14 h-14 p-3">
           <LocateFixed className="text-red-500 h-14 w-14" />
@@ -95,19 +104,14 @@ function FloatingButtons() {
       </div>
       {/* Logo */}
       <div className="absolute bottom-0 p-2  z-[999]">
-        <Image src="/albatros.svg" alt="Albatros" width={100} height={20} />
+        <Image
+          src="/albatros.svg"
+          alt="Albatros"
+          className="w-24"
+          width="0"
+          height="0"
+        />
       </div>
     </>
-  );
-}
-// Hook for CSR
-export function useClientMap() {
-  return useMemo(
-    () =>
-      dynamic(() => import("@/app/Map"), {
-        loading: () => <Spinner />,
-        ssr: false,
-      }),
-    []
   );
 }

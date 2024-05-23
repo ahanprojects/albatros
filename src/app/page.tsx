@@ -3,11 +3,26 @@
 import { Input } from "@/components/ui/input";
 import {  Search } from "lucide-react";
 import Image from "next/image";
-import { useClientMap } from "./Map";
+import { useMemo } from "react";
+import dynamic from "next/dynamic";
+import Spinner from "@/components/common/Spinner";
 
 export default function Home() {
-  const MapComponent = useClientMap()
-
+  const MapComponent = useMemo(
+    () =>
+      dynamic(() => import("@/app/Map"), {
+        loading: () => <Spinner />,
+        ssr: false,
+      }),
+    []
+  )
+  // return (
+  //   <div className="rounded-full relative flex justify-center items-center w-6 h-6">
+  //     <div className="absolute w-7 h-7 bg-blue-200 rounded-full"></div>
+  //     <div className="absolute w-5 h-5 bg-white rounded-full"></div>
+  //     <div className="absolute w-3 h-3 bg-blue-400 rounded-full"></div>
+  //   </div>
+  // )
   return (
     <main className="h-screen w-screen relative">
       <div className="absolute h-full w-full">
