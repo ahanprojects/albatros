@@ -4,17 +4,11 @@
 @import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 @import "leaflet-control-geocoder/dist/Control.Geocoder.css";
 
-.leaflet-control-container {
-  font-family: 'DM Sans', sans-serif !important;
-  font-size: 14px;
-}
-
-.leaflet-right {
-  @apply !right-auto !m-0
-}
-
-.leaflet-top .leaflet-control {
-  @apply !m-0
+.leaflet-container, .leaflet-right, .leaflet-top, .leaflet-control {
+  font: unset !important;
+  top: unset !important;
+  right: unset !important;
+  margin: unset !important;
 }
 
 .leaflet-bar {
@@ -22,14 +16,20 @@
 }
 
 .leaflet-routing-container {
-  @apply absolute bg-white !rounded-lg shadow-lg !px-4 !py-3 !w-[30vw] flex flex-col
+  @apply absolute bg-white !rounded-lg shadow-lg !px-4 !py-3 !w-[30vw] flex flex-col !left-1.5 !top-1.5
 }
 .leaflet-routing-geocoders {
   @apply flex flex-col !p-0 !m-0 !mb-2 !border-b-0 gap-1
 }
 
+.leaflet-routing-geocoder::before {
+  content: '';
+  background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzMzQxNTUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1tYXAtcGluIj48cGF0aCBkPSJNMjAgMTBjMCA2LTggMTItOCAxMnMtOC02LTgtMTJhOCA4IDAgMCAxIDE2IDBaIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMCIgcj0iMyIvPjwvc3ZnPg==');
+  @apply absolute left-2 top-1/2 transform -translate-y-1/2 w-5 h-5 bg-cover bg-center z-50;
+}
+
 .leaflet-routing-geocoders input {
-  @apply p-2 rounded-sm !rounded-md !border-gray-300 !w-[88%]
+  @apply p-2 pl-10 !rounded-md !border-gray-300 !w-[88%]
 }
 
 .leaflet-routing-remove-waypoint::after {
@@ -38,12 +38,12 @@
 
 .leaflet-routing-geocoders button {
   font: unset !important;
-  @apply !rounded-md py-2 px-4 !bg-gray-200 !m-0 !border-none w-fit
+  @apply !rounded-full py-2 px-4 !bg-gray-200 !m-0 !border-none w-fit
 }
 
 .leaflet-routing-add-waypoint::after {
-  content: "Add stop" !important;
-  @apply font-medium !text-sm
+  content: "Add a stop" !important;
+  @apply font-medium !text-sm text-gray-600
 }
 
 
@@ -55,8 +55,8 @@
   @apply !my-0 !h-full
 }
 
-.leaflet-routing-alt > h2 { /* Street name */
-  @apply font-medium mb-2 
+.leaflet-routing-alt > h2 { /* Route name */
+  @apply font-medium !text-base mb-1 
 }
 
 .leaflet-routing-alt > h3 { /* Distance and time */
@@ -64,7 +64,7 @@
 }
 
 .leaflet-routing-alt > table tr {
-  @apply h-8
+  @apply h-8 !text-sm
 }
 
 .leaflet-routing-alt > table tr:hover {

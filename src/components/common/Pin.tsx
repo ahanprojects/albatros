@@ -1,6 +1,6 @@
 import L from "leaflet";
 
-export const myLocationIcon = L.divIcon({
+export const userPin = L.divIcon({
   html: `
   <div class="rounded-full relative flex justify-center items-center w-full h-full">
     <div class="absolute w-full h-full bg-blue-400 opacity-30 rounded-full"></div>

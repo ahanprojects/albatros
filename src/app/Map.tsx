@@ -13,11 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Layers2, LocateFixed, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { myLocationIcon } from "@/components/common/Pin";
+import { userPin } from "@/components/common/Pin";
 import L, { LatLngExpression, LocationEvent } from "leaflet";
 import "leaflet-routing-machine";
 import "leaflet-control-geocoder";
 import "./Map.css"
+import { Input } from "@/components/ui/input";
+import {  Search } from "lucide-react";
 
 const defaults = {
   zoom: 15,
@@ -26,7 +28,7 @@ const defaults = {
 
 export default function MapComponent() {
   const { zoom, posix } = defaults;
-
+  // return <SearchBar />
   return (
     <MapContainer
       center={posix}
@@ -34,6 +36,7 @@ export default function MapComponent() {
       className="w-full h-full"
       zoomControl={false}
       attributionControl={false}>
+      <SearchBar />
       <FloatingButtons />
       <UserMarker />
       <RoutingMachine />
@@ -55,7 +58,7 @@ function UserMarker() {
 
   return (
     position && (
-      <Marker icon={myLocationIcon} position={position}>
+      <Marker icon={userPin} position={position}>
         <Popup>You are here.</Popup>
       </Marker>
     )
@@ -144,18 +147,19 @@ function RoutingMachine() {
     if (!map) return;
 
     const control = L.Routing.control({
-      waypoints: [
-        L.latLng([-6.1712302684977205, 106.81512530730048]),
-        L.latLng([-6.182539172652949, 106.81753423447329]),
-      ],
+      // waypoints: [
+      //   L.latLng([-6.1712302684977205, 106.81512530730048]),
+      //   L.latLng([-6.182539172652949, 106.81753423447329]),
+      // ],
       routeWhileDragging: true,
-      geocoder: (L.Control as any).Geocoder.nominatim(),
+      geocoder: (L.Control as any).Geocoder.photon(),
       lineOptions: {
         styles: [{ color: '#1d4ed8', weight: 5 }],
         extendToWaypoints: true,
         missingRouteTolerance: 10
       }
-    }).addTo(map);
+    })
+    .addTo(map);
 
     return () => {
       if (map && control) map.removeControl(control);
@@ -163,4 +167,17 @@ function RoutingMachine() {
   }, []);
 
   return null;
+}
+
+function SearchBar() {
+  return (
+    <div className="absolute bg-white rounded-full min-w-96 m-4 px-5 py-1.5 shadow-lg flex items-center gap-2 z-[999]">
+      <Image src="/icon.png" alt="Albatros" width={30} height={30} />
+      <Input
+        placeholder="Where to go?"
+        className="text-md border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+      />
+      <Search />
+    </div>
+  );
 }
