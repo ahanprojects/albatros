@@ -28,7 +28,7 @@ export default function Home() {
       <div className="absolute h-full w-full">
         <MapComponent />
       </div>
-      <Sidebar />
+      {/* <Sidebar /> */}
     </main>
   );
 }

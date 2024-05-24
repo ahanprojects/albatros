@@ -8,15 +8,16 @@ import {
   useMapEvents,
   useMap,
 } from "react-leaflet";
-import { Icon, LatLngExpression, LocationEvent } from "leaflet";
-import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
 import { Button } from "@/components/ui/button";
 import { Layers2, LocateFixed, Minus, Plus } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { myLocationIcon } from "@/components/common/Pin";
+import L, { LatLngExpression, LocationEvent } from "leaflet";
+import "leaflet-routing-machine";
+import "leaflet-control-geocoder";
+import "./Map.css"
 
 const defaults = {
   zoom: 15,
@@ -35,6 +36,7 @@ export default function MapComponent() {
       attributionControl={false}>
       <FloatingButtons />
       <UserMarker />
+      <RoutingMachine />
     </MapContainer>
   );
 }
@@ -61,6 +63,7 @@ function UserMarker() {
 }
 
 const tileLayerUrls = [
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   "https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png",
   "https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.png",
   "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
@@ -69,12 +72,13 @@ const tileLayerUrls = [
 function FloatingButtons() {
   const [tileId, setTileId] = useState(0);
   const map = useMapEvents({
+    click: (e) => console.log([e.latlng.lat, e.latlng.lng]),
     locationfound: handleLocate,
   });
 
   function handleLocate(e: LocationEvent) {
     const { lat, lng } = e.latlng;
-    map.setView([lat, lng], 16);
+    map.setView([lat, lng], 20);
   }
 
   function zoomIn() {
@@ -121,7 +125,7 @@ function FloatingButtons() {
         </div>
       </div>
       {/* Logo */}
-      <div className="absolute bottom-0 p-2  z-[999]">
+      <div className="absolute bottom-0 p-2 z-[999]">
         <Image
           src="/albatros.svg"
           alt="Albatros"
@@ -132,4 +136,31 @@ function FloatingButtons() {
       </div>
     </>
   );
+}
+
+function RoutingMachine() {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+
+    const control = L.Routing.control({
+      waypoints: [
+        L.latLng([-6.1712302684977205, 106.81512530730048]),
+        L.latLng([-6.182539172652949, 106.81753423447329]),
+      ],
+      routeWhileDragging: true,
+      geocoder: (L.Control as any).Geocoder.nominatim(),
+      lineOptions: {
+        styles: [{ color: '#1d4ed8', weight: 5 }],
+        extendToWaypoints: true,
+        missingRouteTolerance: 10
+      }
+    }).addTo(map);
+
+    return () => {
+      if (map && control) map.removeControl(control);
+    };
+  }, []);
+
+  return null;
 }

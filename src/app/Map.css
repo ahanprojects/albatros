@@ -1,0 +1,80 @@
+/* Customize Leaflet Routing Machine */
+@import "leaflet/dist/leaflet.css";
+@import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
+@import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+@import "leaflet-control-geocoder/dist/Control.Geocoder.css";
+
+.leaflet-control-container {
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 14px;
+}
+
+.leaflet-right {
+  @apply !right-auto !m-0
+}
+
+.leaflet-top .leaflet-control {
+  @apply !m-0
+}
+
+.leaflet-bar {
+  @apply !border-0 !shadow-lg
+}
+
+.leaflet-routing-container {
+  @apply absolute bg-white !rounded-lg shadow-lg !px-4 !py-3 !w-[30vw] flex flex-col
+}
+.leaflet-routing-geocoders {
+  @apply flex flex-col !p-0 !m-0 !mb-2 !border-b-0 gap-1
+}
+
+.leaflet-routing-geocoders input {
+  @apply p-2 rounded-sm !rounded-md !border-gray-300 !w-[88%]
+}
+
+.leaflet-routing-remove-waypoint::after {
+  @apply !w-auto !right-auto left-2 !text-4xl !font-normal !-top-[9px] !text-slate-400
+}
+
+.leaflet-routing-geocoders button {
+  font: unset !important;
+  @apply !rounded-md py-2 px-4 !bg-gray-200 !m-0 !border-none w-fit
+}
+
+.leaflet-routing-add-waypoint::after {
+  content: "Add stop" !important;
+  @apply font-medium !text-sm
+}
+
+
+.leaflet-routing-alternatives-container {
+  @apply bg-slate-100 rounded-md !p-2 text-slate-800
+}
+
+.leaflet-routing-alt { 
+  @apply !my-0 !h-full
+}
+
+.leaflet-routing-alt > h2 { /* Street name */
+  @apply font-medium mb-2 
+}
+
+.leaflet-routing-alt > h3 { /* Distance and time */
+  @apply !text-base mb-3 !font-semibold text-blue-600
+}
+
+.leaflet-routing-alt > table tr {
+  @apply h-8
+}
+
+.leaflet-routing-alt > table tr:hover {
+  @apply bg-slate-200
+}
+
+.leaflet-routing-alt > table tr td:nth-child(2) {
+  @apply px-2
+}
+
+.leaflet-routing-alt > table tr td:nth-child(3) {
+  @apply text-slate-500
+}
