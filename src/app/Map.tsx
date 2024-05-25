@@ -22,7 +22,7 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { userPin } from "@/components/common/Pin";
-import L, { LatLngExpression, LocationEvent } from "leaflet";
+import L, { LatLngExpression, LatLngTuple, LocationEvent } from "leaflet";
 import "leaflet-routing-machine";
 import "leaflet-control-geocoder";
 import "./Map.css";
@@ -39,35 +39,34 @@ import { cn, generateAddress } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import useDebounce from "@/hooks/useDebounce";
 import { FeatureCollection } from "geojson";
-import { CommandLoading } from "cmdk";
 import Spinner from "@/components/common/Spinner";
+import { DEFAULT_CENTER, DEFAULT_ZOOM, TileUrls } from "@/utils/constants";
+import { Poi } from "@/utils/types";
 
 export default function MapComponent() {
   return (
     <MapContainer
-      center={[-6.176254706719461, -688933.172713317]}
-      zoom={15}
+      center={DEFAULT_CENTER}
+      zoom={DEFAULT_ZOOM}
       className="w-full h-full"
       zoomControl={false}
       attributionControl={false}>
       <Sidebar />
       <FloatingButtons />
       <UserMarker />
-      <RoutingMachine />
+      {/* <RoutingMachine /> */}
     </MapContainer>
   );
 }
 
 function UserMarker() {
   const [position, setPosition] = useState<LatLngExpression>();
-  const map = useMapEvents({
-    locationfound: (e) => {
-      const { lat, lng } = e.latlng;
-      setPosition([lat, lng]);
-    },
-  });
+  const map = useMap();
   useEffect(() => {
     map.locate();
+    map.once("locationfound", (e) => {
+      setPosition([e.latlng.lat, e.latlng.lng]);
+    });
   }, []);
 
   return (
@@ -78,13 +77,6 @@ function UserMarker() {
     )
   );
 }
-
-const tileLayerUrls = [
-  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  "https://tiles.stadiamaps.com/tiles/osm_bright/{z}/{x}/{y}{r}.png",
-  "https://tiles.stadiamaps.com/tiles/alidade_satellite/{z}/{x}/{y}{r}.png",
-  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-];
 
 function FloatingButtons() {
   const [tileId, setTileId] = useState(0);
@@ -107,12 +99,12 @@ function FloatingButtons() {
   }
 
   function changeLayer() {
-    setTileId((v) => (v + 1) % tileLayerUrls.length);
+    setTileId((v) => (v + 1) % TileUrls.length);
   }
 
   return (
     <>
-      <TileLayer url={tileLayerUrls[tileId]} />
+      <TileLayer url={TileUrls[tileId]} />
       <div className="absolute right-0 bottom-0 m-4 flex flex-col gap-2 z-[999]">
         <Button
           onClick={changeLayer}
@@ -155,40 +147,6 @@ function FloatingButtons() {
   );
 }
 
-function RoutingMachine() {
-  const map = useMap();
-  useEffect(() => {
-    if (!map) return;
-
-    const control = L.Routing.control({
-      // waypoints: [
-      //   L.latLng([-6.1712302684977205, 106.81512530730048]),
-      //   L.latLng([-6.182539172652949, 106.81753423447329]),
-      // ],
-      routeWhileDragging: true,
-      geocoder: (L.Control as any).Geocoder.photon(),
-      lineOptions: {
-        styles: [{ color: "#1d4ed8", weight: 5 }],
-        extendToWaypoints: true,
-        missingRouteTolerance: 10,
-      },
-    });
-    // .addTo(map);
-
-    return () => {
-      if (map && control) map.removeControl(control);
-    };
-  }, []);
-
-  return null;
-}
-
-interface Poi {
-  name: string;
-  address: string;
-  latlng: [number, number];
-}
-
 function Sidebar() {
   const map = useMap();
   const [search, setSearch] = useState("");
@@ -207,9 +165,8 @@ function Sidebar() {
     },
   });
   const [showSearch, setShowSearch] = useState(false);
-
-  // Selected POI Data
   const [poi, setPoi] = useState<Poi | null>(null);
+  const [endpoint, setEndpoint] = useState<LatLngTuple | null>(null);
 
   function handleSearch(value: string) {
     setSearch(value);
@@ -234,8 +191,27 @@ function Sidebar() {
   }
 
   function handleCoordinateClick() {
-    if (!poi) return
-    map.setView(poi.latlng, 16)
+    if (!poi) return;
+    map.setView(poi.latlng, 16);
+  }
+
+  function handleRouting() {
+    if (!poi) return;
+    setEndpoint(poi.latlng);
+  }
+
+  if (endpoint) {
+    return (
+      <>
+        <Button
+          variant="secondary"
+          className="absolute z-[101000] m-0 p-0 w-10 h-10 left-[31vw] top-1.5 bg-white shadow-md"
+          onClick={() => setEndpoint(null)}>
+          <X className="text-slate-700" />
+        </Button>
+        <RoutingMachine endpoint={endpoint} />
+      </>
+    );
   }
 
   return (
@@ -315,9 +291,15 @@ function Sidebar() {
                 <X className="text-slate-500" />
               </Button>
             </div>
-            <div className="text-slate-600 text-sm mb-4">{poi.address}</div>
-            <Button className="rounded-full px-8 py-2 mb-4">Directions</Button>
-            <div onClick={handleCoordinateClick} className="flex gap-2 items-center hover:bg-gray-100 rounded-md py-2 pl-0.5">
+            <div className="text-slate-600 text-sm mb-3">{poi.address}</div>
+            <Button
+              onClick={handleRouting}
+              className="rounded-full px-8 py-2 mb-4">
+              Directions
+            </Button>
+            <div
+              onClick={handleCoordinateClick}
+              className="flex gap-2 items-center hover:bg-gray-100 rounded-md py-2 pl-0.5">
               <MapPin className="text-blue-600 w-4 h-4" />
               <span className="text-xs">{poi.latlng.join(", ")}</span>
             </div>
@@ -326,4 +308,28 @@ function Sidebar() {
       </div>
     </>
   );
+}
+
+function RoutingMachine({ endpoint }: { endpoint: LatLngTuple }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!map) return;
+
+    const control = L.Routing.control({
+      waypoints: [null as any, L.latLng(endpoint)],
+      routeWhileDragging: true,
+      geocoder: (L.Control as any).Geocoder.photon(),
+      lineOptions: {
+        styles: [{ color: "#1d4ed8", weight: 5 }],
+        extendToWaypoints: true,
+        missingRouteTolerance: 10,
+      },
+    }).addTo(map);
+
+    return () => {
+      if (map && control) map.removeControl(control);
+    };
+  }, []);
+
+  return null;
 }
