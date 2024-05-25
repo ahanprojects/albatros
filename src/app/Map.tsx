@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { userPin } from "@/components/common/Pin";
+import { redPin, startPin, userPin } from "@/components/common/Pin";
 import L, { LatLngExpression, LatLngTuple, LocationEvent } from "leaflet";
 import "leaflet-routing-machine";
 import "leaflet-control-geocoder";
@@ -217,7 +217,7 @@ function Sidebar() {
   return (
     <>
       {poi && (
-        <Marker position={poi.latlng}>
+        <Marker icon={redPin} position={poi.latlng}>
           <Popup>{poi.name}</Popup>
         </Marker>
       )}
@@ -299,8 +299,8 @@ function Sidebar() {
             </Button>
             <div
               onClick={handleCoordinateClick}
-              className="flex gap-2 items-center hover:bg-gray-100 rounded-md py-2 pl-0.5">
-              <MapPin className="text-blue-600 w-4 h-4" />
+              className="flex gap-2 items-center hover:cursor-pointer hover:bg-gray-100 rounded-md py-2 pl-0.5">
+              <MapPin className="text-red-600 w-4 h-4" />
               <span className="text-xs">{poi.latlng.join(", ")}</span>
             </div>
           </div>
@@ -315,16 +315,21 @@ function RoutingMachine({ endpoint }: { endpoint: LatLngTuple }) {
   useEffect(() => {
     if (!map) return;
 
-    const control = L.Routing.control({
+    const config: any = {
       waypoints: [null as any, L.latLng(endpoint)],
       routeWhileDragging: true,
       geocoder: (L.Control as any).Geocoder.photon(),
       lineOptions: {
-        styles: [{ color: "#1d4ed8", weight: 5 }],
+        styles: [{ color: "blue", weight: 8 }],
         extendToWaypoints: true,
         missingRouteTolerance: 10,
       },
-    }).addTo(map);
+      createMarker: (i: number, wp: any, nWps: number) => {
+        if (i == 0) return L.marker(wp.latLng, { icon: startPin })
+        return L.marker(wp.latLng, { icon: redPin })
+      }
+    }
+    const control = L.Routing.control(config).addTo(map);
 
     return () => {
       if (map && control) map.removeControl(control);
