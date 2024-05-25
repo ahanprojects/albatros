@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { DM_Sans as Sans} from "next/font/google";
+import { DM_Sans as Sans } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster"
-import 'leaflet/dist/leaflet.css';
+import { Toaster } from "@/components/ui/toaster";
+import "leaflet/dist/leaflet.css";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 const sans = Sans({ subsets: ["latin"] });
 
@@ -19,8 +20,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={sans.className}>
-        {children}
-        <Toaster />
+        <ReactQueryProvider>
+          {children}
+          <Toaster />
+        </ReactQueryProvider>
       </body>
     </html>
   );

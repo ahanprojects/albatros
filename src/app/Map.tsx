@@ -10,29 +10,41 @@ import {
 } from "react-leaflet";
 import "leaflet-defaulticon-compatibility";
 import { Button } from "@/components/ui/button";
-import { Layers2, LocateFixed, Minus, Plus } from "lucide-react";
+import {
+  Search,
+  Layers2,
+  LocateFixed,
+  Minus,
+  Plus,
+  MapPin,
+} from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { userPin } from "@/components/common/Pin";
 import L, { LatLngExpression, LocationEvent } from "leaflet";
 import "leaflet-routing-machine";
 import "leaflet-control-geocoder";
-import "./Map.css"
-import { Input } from "@/components/ui/input";
-import {  Search } from "lucide-react";
-
-const defaults = {
-  zoom: 15,
-  posix: [-6.176254706719461, -688933.172713317] as LatLngExpression,
-};
+import "./Map.css";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn, generateAddress } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import useDebounce from "@/hooks/useDebounce";
+import { FeatureCollection } from "geojson";
+import { CommandLoading } from "cmdk";
 
 export default function MapComponent() {
-  const { zoom, posix } = defaults;
-  // return <SearchBar />
   return (
     <MapContainer
-      center={posix}
-      zoom={zoom}
+      center={[-6.176254706719461, -688933.172713317]}
+      zoom={15}
       className="w-full h-full"
       zoomControl={false}
       attributionControl={false}>
@@ -75,7 +87,7 @@ const tileLayerUrls = [
 function FloatingButtons() {
   const [tileId, setTileId] = useState(0);
   const map = useMapEvents({
-    click: (e) => console.log([e.latlng.lat, e.latlng.lng]),
+    // click: (e) => console.log([e.latlng.lat, e.latlng.lng]),
     locationfound: handleLocate,
   });
 
@@ -154,12 +166,12 @@ function RoutingMachine() {
       routeWhileDragging: true,
       geocoder: (L.Control as any).Geocoder.photon(),
       lineOptions: {
-        styles: [{ color: '#1d4ed8', weight: 5 }],
+        styles: [{ color: "#1d4ed8", weight: 5 }],
         extendToWaypoints: true,
-        missingRouteTolerance: 10
-      }
-    })
-    .addTo(map);
+        missingRouteTolerance: 10,
+      },
+    });
+    // .addTo(map);
 
     return () => {
       if (map && control) map.removeControl(control);
@@ -170,14 +182,72 @@ function RoutingMachine() {
 }
 
 function SearchBar() {
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search.trim(), 500);
+  const { data, isLoading } = useQuery({
+    initialData: [],
+    queryKey: ["search", debouncedSearch],
+    queryFn: async () => {
+      if (debouncedSearch.length < 3) return [];
+
+      const json: FeatureCollection = await fetch(
+        `https://photon.komoot.io/api/?q=${debouncedSearch}&limit=5`
+      ).then((res) => res.json());
+      const features = json.features;
+      return features;
+    },
+  });
+  const open = debouncedSearch.length > 0 || data.length > 0;
+
   return (
-    <div className="absolute bg-white rounded-full min-w-96 m-4 px-5 py-1.5 shadow-lg flex items-center gap-2 z-[999]">
-      <Image src="/icon.png" alt="Albatros" width={30} height={30} />
-      <Input
-        placeholder="Where to go?"
-        className="text-md border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-      />
-      <Search />
-    </div>
+    <Command
+      loop
+      shouldFilter={false}
+      className={cn(
+        "border shadow-md absolute z-[1000] w-[32vw] h-fit m-4",
+        open ? "rounded-xl" : "rounded-full"
+      )}>
+      <div className="flex items-center pl-4 pr-2 w-full border-b">
+        <Image
+          src="/icon.png"
+          alt="Albatros"
+          width={24}
+          height={24}
+          className="mr-2 h-6 w-6"
+        />
+        <CommandInput
+          placeholder="Where to go?"
+          className="text-md"
+          value={search}
+          onValueChange={(v) => setSearch(v)}
+        />
+        <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
+      </div>
+      <CommandList>
+        {open && (
+          <CommandEmpty>
+            {debouncedSearch.length < 3
+              ? "Enter at least 3 characters to search."
+              : "No result found."}
+          </CommandEmpty>
+        )}
+        <CommandLoading />
+        {open && (
+          <CommandGroup>
+            {data?.map((v, i) => {
+              return (
+                <CommandItem
+                  key={i}
+                  value={i.toString()}
+                  className="gap-2">
+                  <MapPin className="w-4 block" />
+                  <span className="w-fit">{generateAddress(v.properties)}</span>
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        )}
+      </CommandList>
+    </Command>
   );
 }
