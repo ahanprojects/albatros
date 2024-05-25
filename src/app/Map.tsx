@@ -17,6 +17,7 @@ import {
   Minus,
   Plus,
   MapPin,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -39,6 +40,7 @@ import { useQuery } from "@tanstack/react-query";
 import useDebounce from "@/hooks/useDebounce";
 import { FeatureCollection } from "geojson";
 import { CommandLoading } from "cmdk";
+import Spinner from "@/components/common/Spinner";
 
 export default function MapComponent() {
   return (
@@ -48,7 +50,7 @@ export default function MapComponent() {
       className="w-full h-full"
       zoomControl={false}
       attributionControl={false}>
-      <SearchBar />
+      <Sidebar />
       <FloatingButtons />
       <UserMarker />
       <RoutingMachine />
@@ -87,7 +89,7 @@ const tileLayerUrls = [
 function FloatingButtons() {
   const [tileId, setTileId] = useState(0);
   const map = useMapEvents({
-    // click: (e) => console.log([e.latlng.lat, e.latlng.lng]),
+    click: (e) => console.log([e.latlng.lat, e.latlng.lng]),
     locationfound: handleLocate,
   });
 
@@ -181,10 +183,17 @@ function RoutingMachine() {
   return null;
 }
 
-function SearchBar() {
+interface Poi {
+  name: string;
+  address: string;
+  latlng: [number, number];
+}
+
+function Sidebar() {
+  const map = useMap();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search.trim(), 500);
-  const { data, isLoading } = useQuery({
+  const { data, isFetching } = useQuery({
     initialData: [],
     queryKey: ["search", debouncedSearch],
     queryFn: async () => {
@@ -197,57 +206,124 @@ function SearchBar() {
       return features;
     },
   });
-  const open = debouncedSearch.length > 0 || data.length > 0;
+  const [showSearch, setShowSearch] = useState(false);
+
+  // Selected POI Data
+  const [poi, setPoi] = useState<Poi | null>(null);
+
+  function handleSearch(value: string) {
+    setSearch(value);
+    setShowSearch(value.length > 0);
+  }
+
+  function handleSelectPoi(i: number) {
+    setShowSearch(false);
+
+    // note: leflet uses latlng, geojson uses lnglat
+    const [lng, lat] = (data[i].geometry as any).coordinates;
+    setPoi({
+      name: data[i].properties!.name,
+      address: generateAddress(data[i].properties),
+      latlng: [lat, lng],
+    });
+    map.setView([lat, lng], 16);
+  }
+
+  function clearSelectedPoi() {
+    setPoi(null);
+  }
+
+  function handleCoordinateClick() {
+    if (!poi) return
+    map.setView(poi.latlng, 16)
+  }
 
   return (
-    <Command
-      loop
-      shouldFilter={false}
-      className={cn(
-        "border shadow-md absolute z-[1000] w-[32vw] h-fit m-4",
-        open ? "rounded-xl" : "rounded-full"
-      )}>
-      <div className="flex items-center pl-4 pr-2 w-full border-b">
-        <Image
-          src="/icon.png"
-          alt="Albatros"
-          width={24}
-          height={24}
-          className="mr-2 h-6 w-6"
-        />
-        <CommandInput
-          placeholder="Where to go?"
-          className="text-md"
-          value={search}
-          onValueChange={(v) => setSearch(v)}
-        />
-        <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
+    <>
+      {poi && (
+        <Marker position={poi.latlng}>
+          <Popup>{poi.name}</Popup>
+        </Marker>
+      )}
+      <div className="absolute z-[1000]">
+        <Command
+          loop
+          shouldFilter={false}
+          className={cn(
+            "border shadow-md  w-[32vw] h-fit m-4",
+            showSearch ? "rounded-xl" : "rounded-full"
+          )}>
+          <div className="flex items-center pl-4 pr-2 w-full border-b">
+            <Image
+              src="/icon.png"
+              alt="Albatros"
+              width={24}
+              height={24}
+              className="mr-2 h-6 w-6"
+            />
+            <CommandInput
+              placeholder="Where to go?"
+              className="text-md"
+              value={search}
+              onValueChange={handleSearch}
+            />
+            <Search className="mr-2 h-5 w-5 shrink-0 opacity-50" />
+          </div>
+          <CommandList>
+            {showSearch && (
+              <CommandEmpty>
+                {isFetching && <Spinner />}
+                {!isFetching &&
+                  (debouncedSearch.length < 3
+                    ? "Enter at least 3 characters to search."
+                    : "No result found.")}
+              </CommandEmpty>
+            )}
+            {showSearch && (
+              <CommandGroup>
+                {data?.map((v, i) => {
+                  return (
+                    <CommandItem
+                      key={i}
+                      value={i.toString()}
+                      className="gap-2"
+                      onSelect={() => {
+                        handleSelectPoi(i);
+                      }}>
+                      <MapPin className="w-4 block" />
+                      <span className="w-fit">
+                        {generateAddress(v.properties)}
+                      </span>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
+            )}
+          </CommandList>
+        </Command>
+        {/* Detail POI */}
+        {poi && (
+          <div className="z-[10020] rounded-xl bg-white shadow-lg m-4 p-4  w-[32vw] ">
+            <div className="flex">
+              <h1 className="text-slate-800 text-xl font-semibold flex-1 mb-1">
+                {poi.name}
+              </h1>
+              <Button
+                variant="ghost"
+                className="p-0 h-fit"
+                onClick={clearSelectedPoi}>
+                <X className="text-slate-500" />
+              </Button>
+            </div>
+            <div className="text-slate-600 text-sm mb-4">{poi.address}</div>
+            <Button className="rounded-full px-8 py-2 mb-4">Directions</Button>
+            <div onClick={handleCoordinateClick} className="flex gap-2 items-center hover:bg-gray-100 rounded-md py-2 pl-0.5">
+              <MapPin className="text-blue-600 w-4 h-4" />
+              <span className="text-xs">{poi.latlng.join(", ")}</span>
+            </div>
+          </div>
+        )}
       </div>
-      <CommandList>
-        {open && (
-          <CommandEmpty>
-            {debouncedSearch.length < 3
-              ? "Enter at least 3 characters to search."
-              : "No result found."}
-          </CommandEmpty>
-        )}
-        <CommandLoading />
-        {open && (
-          <CommandGroup>
-            {data?.map((v, i) => {
-              return (
-                <CommandItem
-                  key={i}
-                  value={i.toString()}
-                  className="gap-2">
-                  <MapPin className="w-4 block" />
-                  <span className="w-fit">{generateAddress(v.properties)}</span>
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
-        )}
-      </CommandList>
-    </Command>
+    </>
   );
 }
