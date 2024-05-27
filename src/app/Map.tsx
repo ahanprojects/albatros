@@ -38,7 +38,7 @@ import { cn, generateAddress } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import useDebounce from "@/hooks/useDebounce";
 import { FeatureCollection } from "geojson";
-import Spinner from "@/components/common/Spinner";
+import { Spinner, LogoSpinner } from "@/components/common/Spinner";
 import { DEFAULT_CENTER, DEFAULT_ZOOM, TileUrls } from "@/utils/constants";
 import { Poi } from "@/utils/types";
 import { useToast } from "@/components/ui/use-toast";
@@ -371,12 +371,12 @@ function RoutingMachine({ endpoint }: { endpoint: LatLngTuple }) {
     };
   }, []);
 
-  if (!isLoading) return null;
+  if (!isLoading) return null
 
   return (
     <div className="absolute w-screen h-screen bg-black/60 z-[1001] flex items-center justify-center">
       <div className="bg-white rounded-xl flex justify-center items-center p-4 gap-2">
-        <Spinner />
+      <LogoSpinner />
       </div>
     </div>
   );

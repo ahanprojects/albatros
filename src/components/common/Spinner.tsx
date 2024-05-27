@@ -1,6 +1,7 @@
 import React from "react";
+import Image from "next/image";
 
-export default function Spinner() {
+export function Spinner() {
   return (
     <div className="w-full h-full flex justify-center items-center">
       <div role="status">
@@ -23,4 +24,18 @@ export default function Spinner() {
       </div>
     </div>
   );
+}
+
+export function LogoSpinner() {
+  return (
+    <div className="w-full h-full flex justify-center items-center">
+      <Image
+        src="/icon.png"
+        alt="Albatros"
+        className="w-8 h-8 animate-spin"
+        width="100"
+        height="100"
+      />
+    </div>
+  )
 }

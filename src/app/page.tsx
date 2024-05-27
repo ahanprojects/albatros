@@ -2,13 +2,13 @@
 
 import { useMemo } from "react";
 import dynamic from "next/dynamic";
-import Spinner from "@/components/common/Spinner";
+import { LogoSpinner } from "@/components/common/Spinner";
 
 export default function Home() {
   const MapComponent = useMemo(
     () =>
       dynamic(() => import("@/app/Map"), {
-        loading: () => <Spinner />,
+        loading: () => <LogoSpinner />,
         ssr: false,
       }),
     []
