@@ -20,7 +20,7 @@ import {
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { redPin, startPin, userPin } from "@/components/common/Pin";
 import L, { LatLngExpression, LatLngTuple, LocationEvent } from "leaflet";
 import "leaflet-routing-machine";
@@ -28,7 +28,6 @@ import "leaflet-control-geocoder";
 import "./Map.css";
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -42,6 +41,7 @@ import { FeatureCollection } from "geojson";
 import Spinner from "@/components/common/Spinner";
 import { DEFAULT_CENTER, DEFAULT_ZOOM, TileUrls } from "@/utils/constants";
 import { Poi } from "@/utils/types";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function MapComponent() {
   return (
@@ -54,7 +54,6 @@ export default function MapComponent() {
       <Sidebar />
       <FloatingButtons />
       <UserMarker />
-      {/* <RoutingMachine /> */}
     </MapContainer>
   );
 }
@@ -81,13 +80,11 @@ function UserMarker() {
 function FloatingButtons() {
   const [tileId, setTileId] = useState(0);
   const map = useMapEvents({
-    click: (e) => console.log([e.latlng.lat, e.latlng.lng]),
     locationfound: handleLocate,
   });
 
   function handleLocate(e: LocationEvent) {
-    const { lat, lng } = e.latlng;
-    map.setView([lat, lng], 20);
+    map.setView(e.latlng, DEFAULT_ZOOM);
   }
 
   function zoomIn() {
@@ -105,7 +102,7 @@ function FloatingButtons() {
   return (
     <>
       <TileLayer url={TileUrls[tileId]} />
-      <div className="absolute right-0 bottom-0 m-4 flex flex-col gap-2 z-[999]">
+      <div className="absolute right-0 bottom-0 m-4 flex flex-col gap-2 z-[701]">
         <Button
           onClick={changeLayer}
           size="icon"
@@ -134,7 +131,7 @@ function FloatingButtons() {
         </div>
       </div>
       {/* Logo */}
-      <div className="absolute bottom-0 p-2 z-[999]">
+      <div className="absolute bottom-0 p-2 z-[701]">
         <Image
           src="/albatros.svg"
           alt="Albatros"
@@ -183,7 +180,7 @@ function Sidebar() {
       address: generateAddress(data[i].properties),
       latlng: [lat, lng],
     });
-    map.setView([lat, lng], 16);
+    map.setView([lat, lng], DEFAULT_ZOOM);
   }
 
   function clearSelectedPoi() {
@@ -192,7 +189,7 @@ function Sidebar() {
 
   function handleCoordinateClick() {
     if (!poi) return;
-    map.setView(poi.latlng, 16);
+    map.setView(poi.latlng, DEFAULT_ZOOM);
   }
 
   function handleRouting() {
@@ -205,7 +202,7 @@ function Sidebar() {
       <>
         <Button
           variant="secondary"
-          className="absolute z-[101000] m-0 p-0 w-10 h-10 left-[31vw] top-1.5 bg-white shadow-md"
+          className="absolute z-[701] m-0 p-0 w-10 h-10 left-[31vw] top-1.5 bg-white shadow-md hover:bg-slate-200"
           onClick={() => setEndpoint(null)}>
           <X className="text-slate-700" />
         </Button>
@@ -221,12 +218,12 @@ function Sidebar() {
           <Popup>{poi.name}</Popup>
         </Marker>
       )}
-      <div className="absolute z-[1000]">
+      <div className="absolute m-4 z-[701]">
         <Command
           loop
           shouldFilter={false}
           className={cn(
-            "border shadow-md  w-[32vw] h-fit m-4",
+            "border shadow-md mb-2 w-[32vw] h-fit",
             showSearch ? "rounded-xl" : "rounded-full"
           )}>
           <div className="flex items-center pl-4 pr-2 w-full border-b">
@@ -279,7 +276,7 @@ function Sidebar() {
         </Command>
         {/* Detail POI */}
         {poi && (
-          <div className="z-[10020] rounded-xl bg-white shadow-lg m-4 p-4  w-[32vw] ">
+          <div className="rounded-xl bg-white shadow-lg p-4 w-[32vw] ">
             <div className="flex">
               <h1 className="text-slate-800 text-xl font-semibold flex-1 mb-1">
                 {poi.name}
@@ -310,31 +307,77 @@ function Sidebar() {
   );
 }
 
+/**
+ * !BUG
+ * The leaflet-routing-machine triggers the "routingstart" event
+ * when zooming in the map after a route has already been calculated.
+ * It does not trigger the "routesfound" or "routingerror" events afterwards.
+ * As a result, if we set a loading state to true in the "routingstart" event,
+ * the loading state will never be set to false because the
+ * "routesfound" or "routingerror" events are not triggered.
+ * Workaround: Add an isZooming state to check if "routingstart" is triggered because of zooming.
+ */
+
 function RoutingMachine({ endpoint }: { endpoint: LatLngTuple }) {
-  const map = useMap();
+  const { toast } = useToast();
+  const [isLoading, setLoading] = useState(false);
+  const isZooming = useRef(false);
+  const map = useMapEvents({
+    zoomstart: () => {
+      isZooming.current = true;
+    },
+    zoomend: () => {
+      isZooming.current = false;
+    },
+  });
+
   useEffect(() => {
     if (!map) return;
+    map.locate();
 
     const config: any = {
-      waypoints: [null as any, L.latLng(endpoint)],
+      waypoints: [null, L.latLng(endpoint)],
       routeWhileDragging: true,
       geocoder: (L.Control as any).Geocoder.photon(),
       lineOptions: {
-        styles: [{ color: "blue", weight: 8 }],
+        styles: [{ color: "#044ff5", weight: 8 }],
         extendToWaypoints: true,
         missingRouteTolerance: 10,
       },
       createMarker: (i: number, wp: any, nWps: number) => {
-        if (i == 0) return L.marker(wp.latLng, { icon: startPin })
-        return L.marker(wp.latLng, { icon: redPin })
-      }
-    }
-    const control = L.Routing.control(config).addTo(map);
+        if (i == 0) return L.marker(wp.latLng, { icon: startPin });
+        return L.marker(wp.latLng, { icon: redPin });
+      },
+    };
+    const control = L.Routing.control(config)
+      .on("routingstart", (e) => {
+        if (!isZooming.current) setLoading(true);
+      })
+      .on("routesfound", (e) => {
+        setLoading(false);
+      })
+      .on("routingerror", (e) => {
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: "Unable to calculate route. Please try again later.",
+        });
+      });
+    control.addTo(map);
 
     return () => {
       if (map && control) map.removeControl(control);
     };
   }, []);
 
-  return null;
+  if (!isLoading) return null;
+
+  return (
+    <div className="absolute w-screen h-screen bg-black/60 z-[1001] flex items-center justify-center">
+      <div className="bg-white rounded-xl flex justify-center items-center p-4 gap-2">
+        <Spinner />
+      </div>
+    </div>
+  );
 }

@@ -12,16 +12,10 @@ export default function Home() {
         ssr: false,
       }),
     []
-  )
+  );
   return (
     <main className="h-screen w-screen relative">
-      <div className="absolute h-full w-full">
-        <MapComponent />
-      </div>
+      <MapComponent />
     </main>
   );
 }
-
-
-
-
