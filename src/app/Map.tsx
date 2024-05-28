@@ -69,6 +69,7 @@ export default function MapComponent() {
   );
 }
 
+// Marker for user's current location
 function UserMarker() {
   const [position, setPosition] = useState<LatLngExpression>();
   const map = useMap();
@@ -88,6 +89,7 @@ function UserMarker() {
   );
 }
 
+// Change layer, zoom, my location buttons
 function FloatingButtons() {
   const [tileId, setTileId] = useState(0);
   const map = useMapEvents({
@@ -112,7 +114,9 @@ function FloatingButtons() {
 
   return (
     <>
+      {/* TileLayer */}
       <TileLayer url={TileUrls[tileId]} />
+      {/* Buttons */}
       <div className="absolute right-0 bottom-0 m-4 flex flex-col gap-2 z-[701]">
         <Button
           onClick={changeLayer}
@@ -155,6 +159,7 @@ function FloatingButtons() {
   );
 }
 
+// Search POI Input and Routing Menu
 function Sidebar() {
   const map = useMap();
   const [search, setSearch] = useState("");
@@ -208,6 +213,7 @@ function Sidebar() {
     setEndpoint(poi.latlng);
   }
 
+  // Shows routing menu
   if (endpoint) {
     return (
       <>
@@ -222,6 +228,7 @@ function Sidebar() {
     );
   }
 
+  // Show search POI
   return (
     <>
       {poi && (
@@ -393,12 +400,12 @@ function RoutingMachine({ endpoint }: { endpoint: LatLngTuple }) {
   );
 }
 
+// Attributions
 function Info() {
   return (
     <Dialog>
       <DialogTrigger asChild className="absolute z-[702] right-0 m-4">
         <Button
-          // onClick={null}
           size="icon"
           className="rounded-full shadow-lg bg-white hover:bg-gray-200 w-8 h-8 p-1">
           <InfoIcon className="text-gray-500 h-full w-full" />

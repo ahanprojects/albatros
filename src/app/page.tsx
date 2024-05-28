@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { LogoSpinner } from "@/components/common/Spinner";
 
 export default function Home() {
+  // Forces leaflet to load on the client
   const MapComponent = useMemo(
     () =>
       dynamic(() => import("@/app/Map"), {
