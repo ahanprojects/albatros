@@ -9,7 +9,7 @@ import {
   useMap,
 } from "react-leaflet";
 import "leaflet-defaulticon-compatibility";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Search,
   Layers2,
@@ -18,6 +18,7 @@ import {
   Plus,
   MapPin,
   X,
+  InfoIcon,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -42,6 +43,15 @@ import { Spinner, LogoSpinner } from "@/components/common/Spinner";
 import { DEFAULT_CENTER, DEFAULT_ZOOM, TileUrls } from "@/utils/constants";
 import { Poi } from "@/utils/types";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import Link from "next/link";
 
 export default function MapComponent() {
   return (
@@ -54,6 +64,7 @@ export default function MapComponent() {
       <Sidebar />
       <FloatingButtons />
       <UserMarker />
+      <Info />
     </MapContainer>
   );
 }
@@ -371,13 +382,69 @@ function RoutingMachine({ endpoint }: { endpoint: LatLngTuple }) {
     };
   }, []);
 
-  if (!isLoading) return null
+  if (!isLoading) return null;
 
   return (
     <div className="absolute w-screen h-screen bg-black/60 z-[1001] flex items-center justify-center">
       <div className="bg-white rounded-xl flex justify-center items-center p-4 gap-2">
-      <LogoSpinner />
+        <LogoSpinner />
       </div>
     </div>
+  );
+}
+
+function Info() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild className="absolute z-[702] right-0 m-4">
+        <Button
+          // onClick={null}
+          size="icon"
+          className="rounded-full shadow-lg bg-white hover:bg-gray-200 w-8 h-8 p-1">
+          <InfoIcon className="text-gray-500 h-full w-full" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Attributions</DialogTitle>
+          <DialogDescription></DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col items-start">
+          <Link
+            href="https://leafletjs.com/"
+            className={buttonVariants({ variant: "link" })}>
+            Leaflet
+          </Link>
+          <Link
+            href="https://www.openstreetmap.org/copyright"
+            className={buttonVariants({ variant: "link" })}>
+            © OpenStreetMap contributors
+          </Link>
+          <Link
+            href="https://www.liedman.net/leaflet-routing-machine/"
+            className={buttonVariants({ variant: "link" })}>
+            Leaflet Routing Machine by Per Liedman
+          </Link>
+          <Link
+            href="https://photon.komoot.io/"
+            className={buttonVariants({ variant: "link" })}>
+            Photon Geocoder by Komoot
+          </Link>
+          <Link href="" className={buttonVariants({ variant: "link" })}>
+            © Tiles Esri
+          </Link>
+          <Link
+            href="https://www.flaticon.com/free-icons/albatross"
+            className={buttonVariants({ variant: "link" })}>
+            Albatross icons created by monkik - Flaticon
+          </Link>
+          <Link
+            href="https://lucide.dev/license"
+            className={buttonVariants({ variant: "link" })}>
+            © 2024 Lucide Contributors
+          </Link>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
