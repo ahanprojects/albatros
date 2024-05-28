@@ -42,3 +42,9 @@ You can access it here: https://albatrosmap.vercel.app/
 ## License
 
 This project is licensed under the MIT License.
+
+## Screenshots
+
+![image](https://github.com/ahanprojects/albatros/assets/68496198/2c280a7c-6d1b-4461-9e39-19f1899e1721)
+![image](https://github.com/ahanprojects/albatros/assets/68496198/184ddc24-7d68-4ee5-8a9c-8f7ba4526e4c)
+
