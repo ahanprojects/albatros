@@ -2,6 +2,8 @@
 
 This project utilizes Next.js 14 with Leaflet for interactive maps, including features for searching Points of Interest (POI), multiple points routing, changing tile layers, and obtaining the user's location.
 
+You can access it here: https://albatrosmap.vercel.app/
+
 ## Features
 
 - 🌎**Interactive Maps:** Display world maps with Leaflet.
